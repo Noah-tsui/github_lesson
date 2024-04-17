@@ -1,40 +1,82 @@
+let cells = [];
+let ruleSet;
+let w = 4;
+let startRule = 90;
+let palette = [];
+let y = 0;
+
+function setRules(ruleValue) {
+  ruleSet = ruleValue.toString(2);
+  while (ruleSet.length < 8) {
+    ruleSet = "0" + ruleSet;
+  }
+}
+
 function setup() {
-    createCanvas(400, 400);
+  createCanvas(500, 500);
+  setRules(startRule);
+  palette = [
+    color(11, 106, 136),
+    color(25, 297, 244),
+    color(112, 50, 126),
+    color(146, 83, 161),
+    color(164, 41, 99),
+    color(236, 1, 90),
+    color(240, 99, 164),
+    color(241, 97, 100),
+    color(248, 158, 79),
+  ];
+
+  let total = width / w;
+  for (let i = 0; i < total; i++) {
+    cells[i] = random(palette);
   }
-  
-  function draw() {
-    background(220);
-    background("red")
-    strokeWeight(5)
-    fill('white')
-    ellipse(175, 300, 50, 30)
-    ellipse(225, 300, 50, 30)
-    fill('yellow')
-    ellipse(165, 250, 30, 50)
-    ellipse(235, 250, 30, 50)
-    rect(160, 210, 80, 80)
-    
-    
-    
-    triangle(165, 220, 200, 230, 185, 240)
-    triangle(235, 220, 200, 230, 215, 240)
-    fill('white')
-    strokeWeight(3)
-    ellipse(200, 242, 10, 10)
-    strokeWeight(5)
-    ellipse(170, 115, 45, 80)
-    ellipse(230, 115, 45, 80)
-    ellipse(200, 180, 120, 100)
-    strokeWeight(0)
-  
-    ellipse(175, 140, 35, 25)
-    ellipse(225, 140, 35, 25)
-    fill('black')
-    ellipse(180, 185, 10, 10)
-    ellipse(220, 185, 10, 10)
-    strokeWeight(5)
-    line(195, 200, 205, 205);
-    line(195, 205, 205, 200);
-    
-    
+  background(255);
+}
+
+function draw() {
+  for (let i = 0; i < cells.length; i++) {
+    let x = i * w;
+    noStroke();
+    fill(cells[i]);
+    square(x, y, w);
   }
+
+  y += w;
+  
+  if (y > height) {
+    background(255);
+    y = 0;
+    setRules(floor(random(256)));
+  }
+
+  let nextCells = [];
+  let len = cells.length;
+  for (let i = 0; i < cells.length; i++) {
+    let leftColor = cells[(i - 1 + len) % len];
+    let rightColor = cells[(i + 1 + len) % len];
+    let stateColor = cells[i];
+    let left = brightness(leftColor) < 100 ? 1 : 0;
+    let right = brightness(rightColor) < 100 ? 1 : 0;
+    let state = brightness(stateColor) < 100 ? 1 : 0;
+    let newState = calculateState(left, state, right);
+    if (newState == 0) {
+      nextCells[i] = color(255);
+    } else {
+      let options = [];
+      if (left == 1) options.push(leftColor);
+      if (right == 1) options.push(rightColor);
+      if (state == 1) options.push(stateColor);
+      if (options.length < 1) nextCells[i] = random(palette);
+      else nextCells[i] = random(options);
+    }
+  }
+
+  cells = nextCells; 
+}
+
+function calculateState(a, b, c) {
+  let neighborhood = "" + a + b + c;
+  let value = 7 - parseInt(neighborhood, 2);
+  return parseInt(ruleSet[value]);
+}
